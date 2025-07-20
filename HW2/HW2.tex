@@ -1,0 +1,472 @@
+\documentclass[UTF8, a4paper, 11pt]{report}
+\usepackage{amsmath}
+\usepackage[fontset=fandol]{ctex}
+\usepackage{geometry}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\geometry{a4paper, total={7in, 9in}}
+\author{Shawn}
+\date{March 28}
+
+\begin{document}
+\section*{HW2}
+
+\section*{Exercise 1.}
+
+\begin{algorithm}[H]
+    \caption{Detect-Cycle (\textit{V, Adj})}
+    \begin{algorithmic}[1]
+        \For{$v\in V$}
+        \State visited[v] $\gets$ 0 \Comment{Initialize visit status}
+        \EndFor
+
+        \State EdgeCount $\gets$ 0 \Comment{Initialize edge counter}
+
+        \For{$u \in V$}
+        \If{visited[u] $=$ $0$} \Comment{Perform DFS for each unvisited vertex}
+        \If{\Call{Detect-Cycle-Visit}{u, NIL, Adj, visited, EdgeCount}}
+        \State \Return True \Comment{Cycle detected}
+        \EndIf
+        \EndIf
+        \EndFor
+        \State \Return False \Comment{No cycle found}
+    \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+    \caption{Detect-Cycle-Visit (\textit{v, parent, Adj, visited, EdgeCount})}
+    \begin{algorithmic}[1]
+        \State visited[v] $\gets$ 1 \Comment{Mark current vertex as visited}
+        \For{$w \in$ Adj[v]}
+        \State EdgeCount $\gets$ EdgeCount + 1 \Comment{Increment edge counter}
+        \If{EdgeCount $\geq$ $\mid V\mid$}
+        \State \Return True \Comment{Examined $\mid V\mid$ edges, cycle must exist}
+        \EndIf
+        \If{visited[w] $=$ $0$} \Comment{Recursively visit unvisited neighbors}
+        \If{\Call{DetectCycle-Visit}{w, v, Adj, visited, EdgeCount}}
+        \State \Return True \Comment{Cycle found in lower level}
+        \EndIf
+        \ElsIf{$w \neq$ parent} \Comment{Found visited neighbor that's not the parent}
+        \State \Return True \Comment{Back edge detected, cycle exists}
+        \EndIf
+        \EndFor
+        \State \Return False \Comment{No cycle found in this path}
+    \end{algorithmic}
+\end{algorithm}
+
+1. 初始化 visited list
+- 遍歷所有節點，時間複雜度為 \(O(|V|)\)
+
+2. DFS 遍歷
+- 每個節點最多被 visit 一次：\(\text{visited: } 0 \rightarrow 1\)
+- EdgeCount 確保最多檢查 \(|V|\) 條邊
+- 如果檢查了 \(|V|\) 條邊仍未找到循環，根據題目條件 \(|E| < |V|\)，可確定圖中存在循環
+
+3. 總體時間複雜度
+- 綜合上述分析，總體時間複雜度為 \(O(|V|)\)
+
+\pagebreak
+
+\section*{Exercise 2.}
+
+邊的權重為1至W的整數。W的範圍為$\mid V\mid \le W \le \mid V\mid^{100}$，並且W已給定。
+
+標準排序的時間複雜度為O($\mid E\mid log{\mid E\mid}$)，但在給定有限值域的情況下可以使用redix-sort。
+
+$b = log_2{W}$ bits。因為$W\le \mid V\mid^{100}$，所以$b\le 100\cdot log_2{\mid V\mid}$。
+
+$n = \mid E\mid$。
+
+因為$\mid E\mid \le {\mid V\mid}^2, log_2{n} = log_2{\mid E\mid} \le 2\cdot log_2{\mid V\mid} \le 100\cdot log_2{\mid V\mid} = b$
+
+當 $b \ge log_2{n}$，設定 $r = log_2{n} = log_2{\mid E\mid}$
+
+排序時間為
+\begin{align*}
+    O\left(\frac{b}{r}\cdot (n + 2^r)\right) & = O\left((100\cdot log_2{\mid V\mid} / \lfloor log_2{\mid E\mid}\rfloor)(\mid E\mid + \mid E\mid)\right)                                                   \\
+                                             & \approx O\left(\frac{100\log_2\mid V\mid }{2\log_2\mid V\mid } \cdot 2 \mid E\mid \right) \quad \text{(using $\log_2\mid E\mid  \leq 2\log_2\mid V\mid $)} \\
+                                             & = O(100|E|)                                                                                                                                                \\
+                                             & = O(|E|)
+\end{align*}
+
+\begin{equation}
+    \begin{array}{lccc}
+        \text{Make-Set}   & |V| \text{ times}               & \rightarrow & O(|V|)                   \\
+        \text{Find-Set}   & |E| \text{ times}               & \rightarrow & O(|E| \cdot \alpha(|V|)) \\
+        \text{Union}      & \leq |E| \text{ times}          & \rightarrow & O(|E| \cdot \alpha(|V|)) \\
+        \text{Radix-Sort} & \text{for} |E| \text{ elements} & \rightarrow & O(|E|)                   \\
+        \text{Total}      &                                 &             & O(|E| \cdot \alpha(|V|))
+    \end{array}
+\end{equation}
+
+\section*{Exercise 3.}
+根據題目假設任一邊 $e = (a, b) \in E'$是節點 a 最輕的邊。
+
+假設一個情況是該邊 $e \notin T$，T 是一顆 minimum spanning tree，並且 $T \in G$。
+
+將$T \cup e$，因為 T 是一顆MST，因此將剛好形成一個 cycle，這個cycle 包含 $e = (a, b)$。
+
+因為 e 是節點 a 最輕的邊，在cycle中任意其餘連通 a 的邊 $e' = (a, c)$ 的權重必將大於e ($w(e') > w(e)$)。
+
+現在，考慮如果從$T \cup e$移除$e'$，將得到另一個spanning tree $T' = T + e - e'$。
+
+$w(T') = w(T) + w(e) - w(e') < w(T)$，將與 T 是 minimum spanning tree 的假設相矛盾。
+
+將以上論述套用到所有邊 $e \in E'$，所有邊 $e \in E'$皆必將屬於所有 minimum spanning tree。
+
+\pagebreak
+
+\section*{Exercise 4.}
+
+\begin{algorithm}[H]
+    \caption{Find-Shortest-Path (\textit{G=(V,E,w), s, t, $\delta$})}
+    \begin{algorithmic}[1]
+        \State let $D[1: |V|]$ be a new array \Comment{Distance array}
+        \State let $B[0: \delta]$ be a new array \Comment{Bucket array}
+
+        \For{$v \in V$}
+        \State $D[v] \gets \infty$  \Comment{Initialize all distances to infinity}
+        \EndFor
+
+        \State $D[s] \gets 0$  \Comment{Distance to source is 0}
+
+        \For{$i = 1$ to $\delta$}
+        \State $B[i] \gets \emptyset$  \Comment{Initialize buckets to empty sets}
+        \EndFor
+
+        \State $B[0] \gets \{s\}$  \Comment{Add source to bucket 0}
+
+        \For{$d = 0$ to $\delta$}
+        \While{$B[d] \neq \emptyset$}
+        \State Remove a vertex $v$ from $B[d]$
+
+        \If{$v = t$}
+        \State \Return $D[t]$  \Comment{Found shortest path to target}
+        \EndIf
+
+        \For{$e = (v,u) \in E$}
+        \State $new\_dist \gets D[v] + w(v,u)$
+
+        \If{$new\_dist < D[u]$} \Comment{Relax: Update Distance array and Bucket array }
+        \If{$D[u] \neq \infty$ and $D[u] \leq \delta$}
+        \State $B[D[u]] \gets B[D[u]] - \{u\}$
+        \EndIf
+
+        \State $D[u] \gets new\_dist$
+        \State $B[new\_dist] \gets B[new\_dist] \cup \{u\}$
+
+        \EndIf
+        \EndFor
+        \EndWhile
+        \EndFor
+
+        \State \Return $D[t]$  \Comment{Return shortest distance to target}
+    \end{algorithmic}
+\end{algorithm}
+
+初始化距離array，從 1 至 $\mid V\mid$ - O($\mid V\mid$)
+
+初始化Bucket array，從 1 至 $\delta$ - O($\delta$)
+
+根據Bucket距離順序由小至大更新路徑距離，以BFS的方式遍歷節點及臨邊。
+
+每個節點最多被加入(可能被移除) Bucket array一次 - O($\mid V\mid$)
+
+每個邊最多被考慮一次，並且使用常數時間 O(1) 更新arrays - O($\mid E\mid$)
+
+總時間複雜度: O($\delta$ + $\mid V\mid$ + $\mid E\mid$)
+
+\pagebreak
+
+\section*{Exercise 5.}
+
+\subsection*{從 $\Pi$ 到 D}
+
+要從predecessor matrix $\Pi$ 計算出distance matrix D：
+
+從計算單一個 i 到 j 的 $d_{ij}$ 開始:
+
+1. 對於每對頂點 $(i,j)$，從終點 $j$ 開始。
+
+2. 使用 $\Pi[i,j]$ 找出 $j$ 的predecessor，並持續向前找，直到到達起點 $i$。
+
+3. 累加沿著這條路徑的所有邊權重，得到 $d_{ij}$。
+
+對n個起點，及每個起點對應的n-1個終點 計算上述過程，即可從 predecessor matrix 轉換成 distance matrix
+
+Pseudocode 如下:
+
+\begin{algorithm}
+    \caption{Computing-D-from-$\Pi$ (\textit{G=(V,E,w), $\Pi$})}
+    \begin{algorithmic}[1]
+        \State Initialize $D[i][j] = \infty$ for all $i \neq j$, and $D[i][i] = 0$ for all $i$
+        \For{each edge $(i, j) \in E$}
+        \State $D[i][j] = w(i, j)$
+        \EndFor
+        \For{each source $i \in V$}
+        \For{each destination $j \in V$ where $i \neq j$}
+        \If{$\Pi[i][j] \neq \text{NIL}$}
+        \State $dist = 0$
+        \State $current = j$
+        \State $prev = \Pi[i][current]$
+        \While{$prev \neq i$}
+        \State $dist = dist + w(prev, current)$
+        \State $current = prev$
+        \State $prev = \Pi[i][current]$
+        \EndWhile
+        \State $dist = dist + w(i, current)$
+        \State $D[i][j] = dist$
+        \EndIf
+        \EndFor
+        \EndFor
+        \State \Return $D$
+    \end{algorithmic}
+\end{algorithm}
+
+計算時間複雜度:
+
+$n \gets \mid V\mid$
+
+對於每對頂點 $(i,j)$，最壞情況下可能需要遍歷長度為 $O(n)$ 的路徑。
+
+總共有 $n * (n-1)$ 對頂點。
+
+總時間複雜度為 $O(n^3)$。
+
+\pagebreak
+
+\subsection*{從 D 到 $\Pi$}
+
+要從distance matrix D 計算出 predecessor matrix $\Pi$:
+
+1. 對於每對頂點 $(i,j)$，我們需要找出從 $i$ 到 $j$ 的最短路徑上，$j$ 的predecessor。
+
+2. 通過檢查 $i$ 的每個鄰居 $k$，判斷是否滿足 $D[i,j] = w(i,k) + D[k,j]$。
+
+3. 若找到符合條件的 $k$，則 $k$ 是沿著從 $i$ 到 $j$ 最短路徑的第一步。
+
+所有可能的predecessor為j的鄰居中方向指向j的(adj)，可藉由計算i到所有鄰居的最短距離和鄰居與j的邊的權重($w_{adj,j}$)確定正確的predecessor。
+
+Pseudocode 如下:
+
+\begin{algorithm}
+    \caption{Compute-$\Pi$-From-D (\textit{G=(V,E,w), D})}
+    \begin{algorithmic}[1]
+        \State $n \gets \mid V\mid$
+        \State Initialize $\Pi[i,j] = \text{NIL}$ for all $i,j$
+        \For{$i = 1$ to $n$}
+        \For{$j = 1$ to $n$}
+        \If{$i \neq j$}
+        \For{each vertex $k$ adjacent to $i$}
+        \If{$D[i,j] = w(i,k) + D[k,j]$}
+        \State $\Pi[i,j] \gets k$
+        \State \textbf{break}
+        \EndIf
+        \EndFor
+        \EndIf
+        \EndFor
+        \EndFor
+        \State \Return $\Pi$
+    \end{algorithmic}
+\end{algorithm}
+
+計算時間複雜度:
+
+$n \gets \mid V\mid$
+
+對於每對頂點 $(i,j)$，我們檢查 $i$ 的所有鄰居（最多 $O(n)$ 個節點）。
+
+總共有 $n * (n-1)$ 對頂點。
+
+總時間複雜度為 $O(n^3)$。
+
+\pagebreak
+
+\section*{Exercise 6.}
+
+\subsection*{6-1.}
+
+\begin{algorithm}
+    \caption{ADAPTED-FASTER-APSP (\textit{G=(V,E,w)})}
+    \begin{algorithmic}[1]
+        \State $n \gets |V|$
+        \State Let $L^{(1)}$ be an $n \times n$ matrix
+        \For{$u = 1$ to $n$}
+        \For{$v = 1$ to $n$}
+        \If{$u = v$}
+        \State $L^{(1)}[u, v] \gets 0$
+        \ElsIf{$(u, v) \in E$}
+        \State $L^{(1)}[u, v] \gets w(u, v)$
+        \Else
+        \State $L^{(1)}[u, v] \gets \infty$
+        \EndIf
+        \EndFor
+        \EndFor
+        \State $m \gets 1$
+        \While{$m < c \cdot \log n$} \Comment{where $c$ is the constant in $O(\log n)$}
+        \Statex{/* Form 1: min-plus matrix multiplication */}
+        \State $L^{(2m)} \gets L^{(m)} \otimes L^{(m)}$
+        \Statex{/* Form 2: Detailed expansion of min-plus matrix multiplication */}
+        \For{$i = 1$ to $n$}
+        \For{$j = 1$ to $n$}
+        \State $L^{(2m)}[i,j] \gets \infty$
+        \For{$k = 1$ to $n$}
+        \State $L^{(2m)}[i,j] \gets \min(L^{(2m)}[i,j], L^{(m)}[i,k] + L^{(m)}[k,j])$
+        \EndFor
+        \EndFor
+        \EndFor
+        \State $m \gets 2m$
+        \EndWhile
+        \State \Return $L^{(m)}$
+    \end{algorithmic}
+\end{algorithm}
+
+原本每個最短路徑要遞迴 $O(log{n})$ 次，導致總複雜度為$O(n^3 log{n})$。
+
+當每個最短路徑使用 $O(log{n})$ 個邊時，總複雜度可以降得更低。
+
+因為限制最短路徑最多使用 $log{n}$ 個邊，每次遞迴變成 $O(log{log{n}})$ 次。
+
+總複雜度變成$O(n^3 log{log{n}})$
+
+\pagebreak
+
+\subsection*{6-2.}
+
+Floyd-Warshall 算法的輸出為一個 distance matrix D 和 一個 predecessor matrix $\Pi$。
+
+透過檢查distance matrix D，如果任何點到自己的最短距離為負值，則必有一個包含該點的negative cycle。
+
+因此可以以該點為起點，使用 predecessor matrix $\Pi$ 持續尋找直到回到起點，即建構完成negative cycle。
+
+Pseudocode 如下:
+
+\begin{algorithm}
+    \caption{FIND-NEGATIVE-CYCLE (\textit{D, $\Pi$})}
+    \begin{algorithmic}[1]
+        \For{$v = 1$ to $|V|$}
+        \If{$D[v][v] < 0$} \Comment{Found a vertex on a negative cycle}
+        \State $\text{cycle} \gets [v]$
+        \State $\text{current} \gets \Pi[v][v]$
+
+        \While{$\text{current} \neq v$}
+        \State $\text{cycle} \gets \text{cycle} + [current]$
+        \State $\text{current} \gets \Pi[v][\text{current}]$
+        \EndWhile
+
+        \State $\text{cycle} \gets \text{cycle} + [v]$ \Comment{insert $v$ at ending of cycle}
+        \State \Return cycle
+        \EndIf
+        \EndFor
+
+        \State \Return False \Comment{No negative cycle found}
+    \end{algorithmic}
+\end{algorithm}
+
+計算時間複雜度:
+
+$n \gets \mid V\mid$
+
+遍歷所有節點，找尋到自己距離為負的節點。對每個節點 $v$ 用常數時間檢查 $D[v][v]$，總時間為$O(n)$。
+
+如果找到，則開始建立cycle。最壞的情況下，該循環可能包含所有節點共 n 個。對每個節點 current 用常數時間從 $\Pi[v][\text{current}]$ 找predecessor。總時間為 $O(n)$。
+
+因此，總時間複雜度為 $O(n) + O(n) = O(n)$。
+
+\pagebreak
+
+\section*{Exercise 7.}
+
+給定起點 s 和 終點 t ，要找最大數量的vertex-disjoint path。
+
+這個問題可以 reduce 成一個 maximum flow 問題，然後使用Ford-Fulkerson 或 Edmonds-Karp Algorithm 解決。
+
+透過將flow network 每個邊的權重都變為 1，保證路徑不被重複占用。 但這樣僅保證 edge-disjointness，仍然可以經過同個節點。
+
+因此，可以將除了起點和終點以外的節點v，進一步拆分成兩個節點 vin 和 vout，同樣將權重設為1，確保單一節點v只能經過一次。
+
+Pseudocode 如下:
+
+\begin{algorithm}
+    \caption{Maximum-Vertex-Disjoint-Paths (\textit{G=(V,E,w), s, t})}
+    \begin{algorithmic}[1]
+        \State Create an empty flow network $G' = (V', E', w')$
+
+        \State $V' \gets \{s, t\}$
+
+        \For{ $v \in V \setminus \{s, t\}$}
+        \State $V' \gets V' \cup \{v_{in}, v_{out}\}$
+        \State $E' \gets E' \cup \{(v_{in}, v_{out})\}$
+        \State $w'(v_{in}, v_{out}) \gets 1$
+        \EndFor
+
+        \For{$e = (u, v) \in E$}
+        \If{$u = s$}
+        \State $E' \gets E' \cup \{(s, v_{in})\}$
+        \State $w'(s, v_{in}) \gets 1$
+        \ElsIf{$v = t$}
+        \State $E' \gets E' \cup \{(u_{out}, t)\}$
+        \State $w'(u_{out}, t) \gets 1$
+        \Else
+        \State $E' \gets E' \cup \{(u_{out}, v_{in})\}$
+        \State $w'(u_{out}, v_{in}) \gets 1$
+        \EndIf
+        \EndFor
+
+        \State $flow \gets$ Ford-Fulkerson($G', s, t$)
+        \State $paths \gets$ Extract-Paths-From-Flow($G', flow$)
+
+        \State \Return $paths$
+    \end{algorithmic}
+\end{algorithm}
+
+\pagebreak
+
+\begin{algorithm}
+    \caption{Extract-Paths-From-Flow (\textit{G'=(V',E',w'), flow})}
+    \begin{algorithmic}[1]
+        \State $paths \gets \emptyset$ \Comment{Initialize empty list of paths}
+
+        \While{$\exists P = (s, v_{in1}, v_{out1}, v_{in2}, v_{out2}, \ldots, t)$ such that $flow(e) > 0$ for all $e \in P$}
+        \State $path \gets \emptyset$ \Comment{Initialize current path}
+        \State $path \gets path \cup \{v\}$
+        \State $current \gets v_{out}$
+
+        \While{$current \neq t$}
+        \If{$\exists (current, t) \in E'$ such that $flow(current, t) > 0$}
+        \State $current \gets t$
+        \Else
+        \State Select $(current, v_{in}) \in E'$ such that $flow(current, v_{in}) > 0$
+        \State $path \gets path \cup \{v\}$
+        \State $current \gets v_{out}$
+        \EndIf
+        \EndWhile
+
+        \State $paths \gets paths \cup \{path\}$
+
+        \For{each edge $e \in P$}
+        \State $flow(e) \gets flow(e) - 1$
+        \EndFor
+        \EndWhile
+
+        \State \Return $paths$
+    \end{algorithmic}
+\end{algorithm}
+
+建立 $G'$ 花費時間 $O(\mid V\mid + \mid E\mid)$。
+
+使用Ford-Fulkerson with BFS 計算 Maximum flow 花費時間 $O(\mid V'\mid \cdot {\mid E'\mid}^2)$。
+
+$\mid V'\mid = 2 \cdot \mid V\mid - 2 \approx 2 \cdot \mid V\mid$ 以及 $\mid E'\mid = \mid E\mid + \mid V\mid - 2 \approx \mid E\mid + \mid V\mid$，計算 Maximum flow 花費時間 $O(\mid V\mid \cdot {\mid E\mid}^2)$。
+
+從 flow 中提取 paths，除了s 和 t 每個節點最多被檢查一次，並且每個邊也最多被檢查一次，時間為 $O(\mid E\mid + \mid V\mid)$。
+
+總時間複雜度為 $O(\mid V\mid \cdot {\mid E\mid}^2)$。
+
+\section*{Exercise 8.}
+
+一個演算法被認為是 polynomial-time 表示時間複雜度可以表達成$O(n^k)$，其中 k 是某個常數。本題目中算法的時間複雜度為 $O({\mid V\mid}^2 \cdot {\mid E\mid}^9 \cdot \delta)$。其中決定算法是否為 polynomial-time 的關鍵因素為 $\delta$，因為 $\delta$ 可能以輸入大小 n 的指數級增加，表示算法的運行時間可能以輸入大小 n 的指數級增加。例如，$\delta = 2 ^ n$，其中 $n$ 為輸入大小，那算法運行花費的時間將為 $O({\mid V\mid}^2 \cdot {\mid E\mid}^9 \cdot 2 ^ n)$，為exponential-time 而非 polynomial-time。總而言之，本題目中的算法不是一個 polynomial-time 的算法，因為它的運行時間由 $\delta$ 決定，而 $\delta$ 可能以輸入大小 n 的指數級增加。
+
+\end{document}
